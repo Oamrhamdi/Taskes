@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - تطبيق المهام والأذكار</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- شريط الحالة المميز -->
+        <div class="status-bar">
+            <div class="time" id="current-time">12:00</div>
+            <div class="app-title">إنجاز</div>
+            <div class="battery">80% <i class="fas fa-battery-three-quarters"></i></div>
+        </div>
+
+        <!-- لوحة اللاعب -->
+        <div class="player-panel">
+            <div class="player-avatar">
+                <img src="https://via.placeholder.com/100/333333/FFD700?text=USER" alt="الصورة الشخصية">
+                <div class="level-badge">Lv.<span id="player-level">1</span></div>
+            </div>
+            <div class="player-stats">
+                <div class="stat-item">
+                    <i class="fas fa-star gold-icon"></i>
+                    <span id="player-xp">0</span>/<span id="max-xp">100</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-coins gold-icon"></i>
+                    <span id="player-coins">0</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-tasks red-icon"></i>
+                    <span id="completed-tasks">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط التقدم -->
+        <div class="progress-container">
+            <div class="progress-bar" id="xp-progress"></div>
+        </div>
+
+        <!-- قسم المهام -->
+        <div class="tasks-section">
+            <h2 class="section-title">
+                <i class="fas fa-tasks gold-icon"></i>
+                <span>مهام اليوم</span>
+                <span class="tasks-count" id="tasks-count">0</span>
+            </h2>
+            
+            <div class="add-task-container">
+                <input type="text" id="task-input" placeholder="أضف مهمة جديدة..." class="gold-input">
+                <button id="add-task-btn" class="gold-button">
+                    <i class="fas fa-plus"></i> إضافة
+                </button>
+            </div>
+            
+            <ul class="tasks-list" id="tasks-list"></ul>
+        </div>
+
+        <!-- أدوات إضافية -->
+        <div class="tools-section">
+            <div class="tool-card" id="timer-tool">
+                <i class="fas fa-stopwatch red-icon"></i>
+                <span>المؤقت</span>
+            </div>
+            <div class="tool-card" id="tasbeeh-tool">
+                <i class="fas fa-praying-hands gold-icon"></i>
+                <span>السبحة</span>
+            </div>
+            <div class="tool-card" id="azkar-tool">
+                <i class="fas fa-book-quran gold-icon"></i>
+                <span>الأذكار</span>
+            </div>
+            <div class="tool-card" id="prayer-tool">
+                <i class="fas fa-mosque gold-icon"></i>
+                <span>الصلاة</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة المؤقت -->
+    <div class="modal" id="timer-modal">
+        <div class="modal-content dark-modal">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fas fa-stopwatch red-icon"></i> المؤقت</h2>
+            <div class="timer-display" id="timer-display">25:00</div>
+            <div class="timer-controls">
+                <button class="timer-btn gold-button" id="start-timer">بدء</button>
+                <button class="timer-btn red-button" id="reset-timer">إعادة تعيين</button>
+            </div>
+            <div class="timer-presets">
+                <button class="preset-btn" data-minutes="25">25 دقيقة</button>
+                <button class="preset-btn" data-minutes="50">50 دقيقة</button>
+                <button class="preset-btn" data-minutes="5">5 دقائق</button>
+                <button class="preset-btn" data-minutes="15">15 دقيقة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة السبحة -->
+    <div class="modal" id="tasbeeh-modal">
+        <div class="modal-content dark-modal">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fas fa-praying-hands gold-icon"></i> عداد التسبيح</h2>
+            <div class="tasbeeh-display" id="tasbeeh-count">0</div>
+            <div class="tasbeeh-buttons">
+                <button class="tasbeeh-btn gold-button" id="add-tasbeeh">
+                    <i class="fas fa-plus"></i> زيادة
+                </button>
+                <button class="tasbeeh-btn red-button" id="reset-tasbeeh">
+                    <i class="fas fa-redo"></i> إعادة تعيين
+                </button>
+            </div>
+            <div class="tasbeeh-types">
+                <button class="tasbeeh-type-btn active" data-dhikr="سبحان الله">سبحان الله</button>
+                <button class="tasbeeh-type-btn" data-dhikr="الحمد لله">الحمد لله</button>
+                <button class="tasbeeh-type-btn" data-dhikr="الله أكبر">الله أكبر</button>
+            </div>
+            <div class="current-dhikr" id="current-dhikr">سبحان الله</div>
+        </div>
+    </div>
+
+    <!-- نافذة الأذكار -->
+    <div class="modal" id="azkar-modal">
+        <div class="modal-content dark-modal">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fas fa-book-quran gold-icon"></i> أذكار الصباح والمساء</h2>
+            
+            <div class="azkar-tabs">
+                <button class="azkar-tab active" data-tab="morning">أذكار الصباح</button>
+                <button class="azkar-tab" data-tab="evening">أذكار المساء</button>
+            </div>
+            
+            <div class="azkar-content">
+                <div class="azkar-tab-content active" id="morning-azkar">
+                    <div class="azkar-checkbox">
+                        <input type="checkbox" id="morning-check">
+                        <label for="morning-check">هل قرأت أذكار الصباح اليوم؟</label>
+                    </div>
+                    <div class="azkar-list" id="morning-azkar-list"></div>
+                </div>
+                
+                <div class="azkar-tab-content" id="evening-azkar">
+                    <div class="azkar-checkbox">
+                        <input type="checkbox" id="evening-check">
+                        <label for="evening-check">هل قرأت أذكار المساء اليوم؟</label>
+                    </div>
+                    <div class="azkar-list" id="evening-azkar-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الصلاة -->
+    <div class="modal" id="prayer-modal">
+        <div class="modal-content dark-modal">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fas fa-mosque gold-icon"></i> متتبع الصلوات</h2>
+            
+            <div class="prayer-grid">
+                <div class="prayer-item">
+                    <h3>الفجر</h3>
+                    <div class="prayer-checkbox">
+                        <input type="checkbox" id="fajr-check">
+                        <label for="fajr-check">هل صليت الفجر اليوم؟</label>
+                    </div>
+                </div>
+                
+                <div class="prayer-item">
+                    <h3>الظهر</h3>
+                    <div class="prayer-checkbox">
+                        <input type="checkbox" id="dhuhr-check">
+                        <label for="dhuhr-check">هل صليت الظهر اليوم؟</label>
+                    </div>
+                </div>
+                
+                <div class="prayer-item">
+                    <h3>العصر</h3>
+                    <div class="prayer-checkbox">
+                        <input type="checkbox" id="asr-check">
+                        <label for="asr-check">هل صليت العصر اليوم؟</label>
+                    </div>
+                </div>
+                
+                <div class="prayer-item">
+                    <h3>المغرب</h3>
+                    <div class="prayer-checkbox">
+                        <input type="checkbox" id="maghrib-check">
+                        <label for="maghrib-check">هل صليت المغرب اليوم؟</label>
+                    </div>
+                </div>
+                
+                <div class="prayer-item">
+                    <h3>العشاء</h3>
+                    <div class="prayer-checkbox">
+                        <input type="checkbox" id="isha-check">
+                        <label for="isha-check">هل صليت العشاء اليوم؟</label>
+                    </div>
+                </div>
+                
+                <div class="prayer-item">
+                    <h3>الصلاة على النبي</h3>
+                    <div class="prayer-checkbox">
+                        <input type="checkbox" id="salah-check">
+                        <label for="salah-check">هل صليت على النبي اليوم؟</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="prayer-stats">
+                <h3>إحصائيات اليوم</h3>
+                <div class="prayer-progress">
+                    <div class="progress-bar" id="prayer-progress"></div>
+                    <span id="prayer-count">0/5</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإشعارات -->
+    <div id="notification" class="notification"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // تسجيل Service Worker لتطبيق PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered');
+                    }).catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
