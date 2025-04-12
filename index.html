@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إنجاز - تطبيق المهام والأذكار</title>
+    <title>إنجاز - تطبيق المهام المميز</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -72,13 +72,17 @@
                 <i class="fas fa-praying-hands gold-icon"></i>
                 <span>السبحة</span>
             </div>
-            <div class="tool-card" id="azkar-tool">
-                <i class="fas fa-book-quran gold-icon"></i>
-                <span>الأذكار</span>
+            <div class="tool-card" id="rewards-tool">
+                <i class="fas fa-trophy gold-icon"></i>
+                <span>المكافآت</span>
             </div>
-            <div class="tool-card" id="prayer-tool">
+            <div class="tool-card" id="achievements-tool">
+                <i class="fas fa-medal gold-icon"></i>
+                <span>الإنجازات</span>
+            </div>
+            <div class="tool-card" id="spirituality-tool">
                 <i class="fas fa-mosque gold-icon"></i>
-                <span>الصلاة</span>
+                <span>الروحانيات</span>
             </div>
         </div>
     </div>
@@ -125,98 +129,120 @@
         </div>
     </div>
 
-    <!-- نافذة الأذكار -->
-    <div class="modal" id="azkar-modal">
+    <!-- نافذة المكافآت -->
+    <div class="modal" id="rewards-modal">
         <div class="modal-content dark-modal">
             <span class="close-modal">&times;</span>
-            <h2><i class="fas fa-book-quran gold-icon"></i> أذكار الصباح والمساء</h2>
-            
-            <div class="azkar-tabs">
-                <button class="azkar-tab active" data-tab="morning">أذكار الصباح</button>
-                <button class="azkar-tab" data-tab="evening">أذكار المساء</button>
-            </div>
-            
-            <div class="azkar-content">
-                <div class="azkar-tab-content active" id="morning-azkar">
-                    <div class="azkar-checkbox">
-                        <input type="checkbox" id="morning-check">
-                        <label for="morning-check">هل قرأت أذكار الصباح اليوم؟</label>
-                    </div>
-                    <div class="azkar-list" id="morning-azkar-list"></div>
-                </div>
-                
-                <div class="azkar-tab-content" id="evening-azkar">
-                    <div class="azkar-checkbox">
-                        <input type="checkbox" id="evening-check">
-                        <label for="evening-check">هل قرأت أذكار المساء اليوم؟</label>
-                    </div>
-                    <div class="azkar-list" id="evening-azkar-list"></div>
-                </div>
-            </div>
+            <h2><i class="fas fa-trophy gold-icon"></i> متجر المكافآت</h2>
+            <div class="rewards-grid" id="rewards-grid"></div>
         </div>
     </div>
 
-    <!-- نافذة الصلاة -->
-    <div class="modal" id="prayer-modal">
+    <!-- نافذة الإنجازات -->
+    <div class="modal" id="achievements-modal">
         <div class="modal-content dark-modal">
             <span class="close-modal">&times;</span>
-            <h2><i class="fas fa-mosque gold-icon"></i> متتبع الصلوات</h2>
-            
-            <div class="prayer-grid">
-                <div class="prayer-item">
-                    <h3>الفجر</h3>
-                    <div class="prayer-checkbox">
-                        <input type="checkbox" id="fajr-check">
-                        <label for="fajr-check">هل صليت الفجر اليوم؟</label>
+            <h2><i class="fas fa-trophy gold-icon"></i> الإنجازات</h2>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="unlocked">المكتسبة</button>
+                <button class="tab-btn" data-tab="locked">القادمة</button>
+            </div>
+            <div class="achievements-container" id="achievements-list"></div>
+        </div>
+    </div>
+
+    <!-- نافذة الروحانيات -->
+    <div class="modal" id="spirituality-modal">
+        <div class="modal-content dark-modal">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fas fa-mosque gold-icon"></i> الروحانيات</h2>
+            <div class="spirituality-container">
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-sun"></i>
+                        <span>أذكار الصباح</span>
                     </div>
+                    <div class="spirituality-status" id="morning-adhkar-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="morning-adhkar-btn">تمت</button>
                 </div>
-                
-                <div class="prayer-item">
-                    <h3>الظهر</h3>
-                    <div class="prayer-checkbox">
-                        <input type="checkbox" id="dhuhr-check">
-                        <label for="dhuhr-check">هل صليت الظهر اليوم؟</label>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-moon"></i>
+                        <span>أذكار المساء</span>
                     </div>
+                    <div class="spirituality-status" id="evening-adhkar-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="evening-adhkar-btn">تمت</button>
                 </div>
-                
-                <div class="prayer-item">
-                    <h3>العصر</h3>
-                    <div class="prayer-checkbox">
-                        <input type="checkbox" id="asr-check">
-                        <label for="asr-check">هل صليت العصر اليوم؟</label>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-pray"></i>
+                        <span>صلاة الفجر</span>
                     </div>
+                    <div class="spirituality-status" id="fajr-prayer-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="fajr-prayer-btn">تمت</button>
                 </div>
-                
-                <div class="prayer-item">
-                    <h3>المغرب</h3>
-                    <div class="prayer-checkbox">
-                        <input type="checkbox" id="maghrib-check">
-                        <label for="maghrib-check">هل صليت المغرب اليوم؟</label>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-sun"></i>
+                        <span>صلاة الظهر</span>
                     </div>
+                    <div class="spirituality-status" id="dhuhr-prayer-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="dhuhr-prayer-btn">تمت</button>
                 </div>
-                
-                <div class="prayer-item">
-                    <h3>العشاء</h3>
-                    <div class="prayer-checkbox">
-                        <input type="checkbox" id="isha-check">
-                        <label for="isha-check">هل صليت العشاء اليوم؟</label>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-cloud-sun"></i>
+                        <span>صلاة العصر</span>
                     </div>
+                    <div class="spirituality-status" id="asr-prayer-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="asr-prayer-btn">تمت</button>
                 </div>
-                
-                <div class="prayer-item">
-                    <h3>الصلاة على النبي</h3>
-                    <div class="prayer-checkbox">
-                        <input type="checkbox" id="salah-check">
-                        <label for="salah-check">هل صليت على النبي اليوم؟</label>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-sunset"></i>
+                        <span>صلاة المغرب</span>
                     </div>
+                    <div class="spirituality-status" id="maghrib-prayer-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="maghrib-prayer-btn">تمت</button>
+                </div>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-moon"></i>
+                        <span>صلاة العشاء</span>
+                    </div>
+                    <div class="spirituality-status" id="isha-prayer-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="isha-prayer-btn">تمت</button>
+                </div>
+                <div class="spirituality-item">
+                    <div class="spirituality-info">
+                        <i class="fas fa-hands-praying"></i>
+                        <span>الصلاة على النبي</span>
+                    </div>
+                    <div class="spirituality-status" id="salawat-status">
+                        <i class="fas fa-times red-icon"></i>
+                    </div>
+                    <button class="spirituality-btn gold-button" id="salawat-btn">تمت</button>
                 </div>
             </div>
-            
-            <div class="prayer-stats">
-                <h3>إحصائيات اليوم</h3>
-                <div class="prayer-progress">
-                    <div class="progress-bar" id="prayer-progress"></div>
-                    <span id="prayer-count">0/5</span>
+            <div class="spirituality-stats">
+                <div class="stat-item">
+                    <i class="fas fa-star gold-icon"></i>
+                    <span>النقاط الروحانية: </span>
+                    <span id="spiritual-points">0</span>
                 </div>
             </div>
         </div>

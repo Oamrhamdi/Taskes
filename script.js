@@ -11,10 +11,28 @@ document.addEventListener('DOMContentLoaded', function() {
         settings: {
             theme: 'dark',
             notifications: true
+        },
+        timerSessions: 0,
+        totalTasbeeh: 0,
+        rewardsClaimed: 0,
+        unlockedAchievements: [],
+        spirituality: {
+            morningAdhkar: false,
+            eveningAdhkar: false,
+            fajrPrayer: false,
+            dhuhrPrayer: false,
+            asrPrayer: false,
+            maghribPrayer: false,
+            ishaPrayer: false,
+            salawat: false,
+            lastUpdated: null,
+            spiritualPoints: 0,
+            adhkarStreak: 0,
+            dailyPrayersCompleted: 0
         }
     };
 
-    // المهام الافتراضية (كل مهمة 100 نقطة كما طلبت)
+    // المهام الافتراضية
     const defaultTasks = [
         { id: 1, text: "إنهاء المشروع المطلوب", xp: 100, completed: false },
         { id: 2, text: "حل الواجبات الدراسية", xp: 100, completed: false },
@@ -24,220 +42,86 @@ document.addEventListener('DOMContentLoaded', function() {
     // المكافآت المتاحة
     const rewards = [
         { id: 1, name: "استراحة مميزة", icon: "fa-crown", cost: 200, description: "استراحة لمدة 30 دقيقة" },
-        { id: 2, name: "وجبة لذيذة", icon: "fa-utensils", cost: 300, description: "استمتع بوجبة من اختيارك" },
+        { id: 2, name: "وجبة لذيذة", icon: "fa-utensils", cost: 300, description: "استمتع بوجبة من اختي��رك" },
         { id: 3, name: "جلسة ألعاب", icon: "fa-gamepad", cost: 400, description: "ساعة من وقت الألعاب" },
         { id: 4, name: "فيلم مسائي", icon: "fa-film", cost: 500, description: "شاهد فيلمك المفضل" },
         { id: 5, name: "خلفية مميزة", icon: "fa-image", cost: 600, description: "خلفية ذهبية للتطبيق" },
         { id: 6, name: "لقب مميز", icon: "fa-medal", cost: 800, description: "لقب يظهر بجانب اسمك" }
     ];
 
-    // أذكار الصباح
-    const morningAzkar = [
+    // الإنجازات المتاحة
+    const achievements = [
         {
-            title: "آية الكرسي",
-            content: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ",
-            reference: "البقرة: 255",
-            count: 1
+            id: 1,
+            title: "المبتدئ",
+            description: "أكمل أول مهمة لك",
+            icon: "fa-star",
+            condition: (player) => player.completedTasks >= 1,
+            reward: { coins: 50 },
+            progress: (player) => Math.min(player.completedTasks / 1, 1)
         },
         {
-            title: "المعوذات",
-            content: "سورة الإخلاص (3 مرات)\nقُلْ هُوَ اللَّهُ أَحَدٌ\n\nسورة الفلق (3 مرات)\nقُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\n\nسورة الناس (3 مرات)\nقُلْ أَعُوذُ بِرَبِّ النَّاسِ",
-            count: 3
+            id: 2,
+            title: "منتج",
+            description: "أكمل 10 مهام",
+            icon: "fa-tasks",
+            condition: (player) => player.completedTasks >= 10,
+            reward: { coins: 200, xp: 100 },
+            progress: (player) => Math.min(player.completedTasks / 10, 1)
         },
         {
-            title: "الدعاء العام",
-            content: "أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. رب أسألك خير ما في هذا اليوم وخير ما بعده، وأعوذ بك من شر هذا اليوم وشر ما بعده، رب أعوذ بك من الكسل وسوء الكبر، رب أعوذ بك من عذاب في النار وعذاب في القبر.",
-            count: 1
+            id: 3,
+            title: "محترف المؤقت",
+            description: "استخدم المؤقت 5 مرات",
+            icon: "fa-stopwatch",
+            condition: (player) => player.timerSessions >= 5,
+            reward: { coins: 150 },
+            progress: (player) => Math.min((player.timerSessions || 0) / 5, 1)
         },
         {
-            title: "الدعاء بالغفران",
-            content: "اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك عليّ، وأبوء بذنبي، فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.",
-            count: 1
+            id: 4,
+            title: "مستوى متقدم",
+            description: "صل إلى المستوى 5",
+            icon: "fa-level-up-alt",
+            condition: (player) => player.level >= 5,
+            reward: { coins: 500, xp: 300 },
+            progress: (player) => Math.min(player.level / 5, 1)
         },
         {
-            title: "التوحيد والإقرار",
-            content: "اللهم بك أصبحنا، وبك أمسينا، وبك نحيا، وبك نموت، وإليك النشور.",
-            count: 3
+            id: 5,
+            title: "مسبح نشيط",
+            description: "أكمل 50 تسبيحة",
+            icon: "fa-praying-hands",
+            condition: (player) => player.totalTasbeeh >= 50,
+            reward: { coins: 100 },
+            progress: (player) => Math.min((player.totalTasbeeh || 0) / 50, 1)
         },
         {
-            title: "التسبيح",
-            content: "سبحان الله وبحمده، عدد خلقه، ورضا نفسه، وزنة عرشه، ومداد كلماته.",
-            count: 3
+            id: 6,
+            title: "جامع المكافآت",
+            description: "احصل على 5 مكافآت",
+            icon: "fa-award",
+            condition: (player) => player.rewardsClaimed >= 5,
+            reward: { coins: 300 },
+            progress: (player) => Math.min((player.rewardsClaimed || 0) / 5, 1)
         },
         {
-            title: "طلب العافية",
-            content: "اللهم إني أسألك العافية في الدنيا والآخرة، اللهم إني أسألك العفو والعافية في ديني ودنياي، وأهلي ومالي، اللهم استر عوراتي، وآمن روعاتي، اللهم احفظني من بين يديّ، ومن خلفي، وعن يميني، وعن شمالي، ومن فوقي، وأعوذ بعظمتك أن أغتال من تحتي.",
-            count: 3
+            id: 7,
+            title: "المحافظ على الأذكار",
+            description: "أكمل أذكار الصباح والمساء 7 أيام متتالية",
+            icon: "fa-book-quran",
+            condition: (player) => player.spirituality.adhkarStreak >= 7,
+            reward: { coins: 400, xp: 200 },
+            progress: (player) => Math.min((player.spirituality.adhkarStreak || 0) / 7, 1)
         },
         {
-            title: "الدعاء بالحفظ",
-            content: "اللهم عالم الغيب والشهادة، فاطر السماوات والأرض، رب كل شيء ومليكه، أشهد أن لا إله إلا أنت، أعوذ بك من شر نفسي، ومن شر الشيطان وشركه، وأن أقترف على نفسي سوءًا أو أجره إلى مسلم.",
-            count: 1
-        },
-        {
-            title: "حسبي الله",
-            content: "حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم.",
-            count: 7
-        },
-        {
-            title: "بسم الله",
-            content: "بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء وهو السميع العليم.",
-            count: 3
-        },
-        {
-            title: "الرضا بالله",
-            content: "رضيت بالله ربًا، وبالإسلام دينًا، وبمحمد ﷺ نبيًا.",
-            count: 3
-        },
-        {
-            title: "الشهادة",
-            content: "اللهم إني أصبحت أشهدك وأشهد حملة عرشك وملائكتك وجميع خلقك، أنك أنت الله لا إله إلا أنت، وحدك لا شريك لك، وأن محمدًا عبدك ورسولك.",
-            count: 4
-        },
-        {
-            title: "الحمد والشكر",
-            content: "اللهم ما أصبح بي من نعمة أو بأحد من خلقك، فمنك وحدك لا شريك لك، فلك الحمد ولك الشكر.",
-            count: 1
-        },
-        {
-            title: "التكبير",
-            content: "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير.",
-            count: 100
-        },
-        {
-            title: "الاستعاذة من الكفر والفقر",
-            content: "اللهم إني أعوذ بك من الكفر والفقر، وأعوذ بك من عذاب القبر، لا إله إلا أنت.",
-            count: 3
-        },
-        {
-            title: "طلب العلم النافع",
-            content: "اللهم إني أسألك علماً نافعاً، ورزقاً طيباً، وعملاً متقبلاً.",
-            count: 1
-        },
-        {
-            title: "الاستعاذة بكلمات الله",
-            content: "أعوذ بكلمات الله التامات من شر ما خلق.",
-            count: 3
-        },
-        {
-            title: "يا حي يا قيوم",
-            content: "يا حي يا قيوم برحمتك أستغيث، أصلح لي شأني كله، ولا تكلني إلى نفسي طرفة عين.",
-            count: 3
-        },
-        {
-            title: "التسبيح المئة",
-            content: "سبحان الله وبحمده.",
-            count: 100
-        },
-        {
-            title: "الصلاة على النبي",
-            content: "اللهم صلِّ وسلم وبارك على نبينا محمد.",
-            count: 10
-        }
-    ];
-
-    // أذكار المساء
-    const eveningAzkar = [
-        {
-            title: "آية الكرسي",
-            content: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ",
-            reference: "البقرة: 255",
-            count: 1
-        },
-        {
-            title: "المعوذات",
-            content: "سورة الإخلاص (3 مرات)\nقُلْ هُوَ اللَّهُ أَحَدٌ\n\nسورة الفلق (3 مرات)\nقُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\n\nسورة الناس (3 مرات)\nقُلْ أَعُوذُ بِرَبِّ النَّاسِ",
-            count: 3
-        },
-        {
-            title: "الدعاء العام",
-            content: "أمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. رب أسألك خير ما في هذه الليلة وخير ما بعدها، وأعوذ بك من شر هذه الليلة وشر ما بعدها، رب أعوذ بك من الكسل وسوء الكبر، رب أعوذ بك من عذاب في النار وعذاب في القبر.",
-            count: 1
-        },
-        {
-            title: "الدعاء بالغفران",
-            content: "اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك عليّ، وأبوء بذنبي، فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.",
-            count: 1
-        },
-        {
-            title: "التوحيد والإقرار",
-            content: "اللهم بك أمسينا، وبك أصبحنا، وبك نحيا، وبك نموت، وإليك المصير.",
-            count: 3
-        },
-        {
-            title: "التسبيح",
-            content: "سبحان الله وبحمده، عدد خلقه، ورضا نفسه، وزنة عرشه، ومداد كلماته.",
-            count: 3
-        },
-        {
-            title: "طلب العافية",
-            content: "اللهم إني أسألك العافية في الدنيا والآخرة، اللهم إني أسألك العفو والعافية في ديني ودنياي، وأهلي ومالي، اللهم استر عوراتي، وآمن روعاتي، اللهم احفظني من بين يديّ، ومن خلفي، وعن يميني، وعن شمالي، ومن فوقي، وأعوذ بعظمتك أن أغتال من تحتي.",
-            count: 3
-        },
-        {
-            title: "الدعاء بالحفظ",
-            content: "اللهم عالم الغيب والشهادة، فاطر السماوات والأرض، رب كل شيء ومليكه، أشهد أن لا إله إلا أنت، أعوذ بك من شر نفسي، ومن شر الشيطان وشركه، وأن أقترف على نفسي سوءًا أو أجره إلى مسلم.",
-            count: 1
-        },
-        {
-            title: "حسبي الله",
-            content: "حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم.",
-            count: 7
-        },
-        {
-            title: "بسم الله",
-            content: "بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء وهو السميع العليم.",
-            count: 3
-        },
-        {
-            title: "الرضا بالله",
-            content: "رضيت بالله ربًا، وبالإسلام دينًا، وبمحمد ﷺ نبيًا.",
-            count: 3
-        },
-        {
-            title: "الشهادة",
-            content: "اللهم إني أمسيت أشهدك وأشهد حملة عرشك وملائكتك وجميع خلقك، أنك أنت الله لا إله إلا أنت، وحدك لا شريك لك، وأن محمدًا عبدك ورسولك.",
-            count: 4
-        },
-        {
-            title: "الحمد والشكر",
-            content: "اللهم ما أمسى بي من نعمة أو بأحد من خلقك، فمنك وحدك لا شريك لك، فلك الحمد ولك الشكر.",
-            count: 1
-        },
-        {
-            title: "التكبير",
-            content: "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير.",
-            count: 100
-        },
-        {
-            title: "الاستعاذة من الكفر والفقر",
-            content: "اللهم إني أعوذ بك من الكفر والفقر، وأعوذ بك من عذاب القبر، لا إله إلا أنت.",
-            count: 3
-        },
-        {
-            title: "طلب العلم النافع",
-            content: "اللهم إني أسألك علماً نافعاً، ورزقاً طيباً، وعملاً متقبلاً.",
-            count: 1
-        },
-        {
-            title: "الاستعاذة بكلمات الله",
-            content: "أعوذ بكلمات الله التامات من شر ما خلق.",
-            count: 3
-        },
-        {
-            title: "يا حي يا قيوم",
-            content: "يا حي يا قيوم برحمتك أستغيث، أصلح لي شأني كله، ولا تكلني إلى نفسي طرفة عين.",
-            count: 3
-        },
-        {
-            title: "التسبيح المئة",
-            content: "سبحان الله وبحمده.",
-            count: 100
-        },
-        {
-            title: "الصلاة على النبي",
-            content: "اللهم صلِّ وسلم وبارك على نبينا محمد.",
-            count: 10
+            id: 8,
+            title: "المحافظ على الصلاة",
+            description: "أكمل الصلوات الخمس ليوم كامل",
+            icon: "fa-mosque",
+            condition: (player) => player.spirituality.dailyPrayersCompleted >= 1,
+            reward: { coins: 300, xp: 150 },
+            progress: (player) => Math.min((player.spirituality.dailyPrayersCompleted || 0) / 1, 1)
         }
     ];
 
@@ -268,25 +152,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const tasbeehTypes = document.querySelectorAll('.tasbeeh-type-btn');
     const currentDhikr = document.getElementById('current-dhikr');
     
-    // عناصر الأذكار
-    const azkarModal = document.getElementById('azkar-modal');
-    const azkarTool = document.getElementById('azkar-tool');
-    const morningAzkarList = document.getElementById('morning-azkar-list');
-    const eveningAzkarList = document.getElementById('evening-azkar-list');
-    const morningCheck = document.getElementById('morning-check');
-    const eveningCheck = document.getElementById('evening-check');
+    // عناصر المكافآت
+    const rewardsModal = document.getElementById('rewards-modal');
+    const rewardsGrid = document.getElementById('rewards-grid');
     
-    // عناصر الصلاة
-    const prayerModal = document.getElementById('prayer-modal');
-    const prayerTool = document.getElementById('prayer-tool');
-    const fajrCheck = document.getElementById('fajr-check');
-    const dhuhrCheck = document.getElementById('dhuhr-check');
-    const asrCheck = document.getElementById('asr-check');
-    const maghribCheck = document.getElementById('maghrib-check');
-    const ishaCheck = document.getElementById('isha-check');
-    const salahCheck = document.getElementById('salah-check');
-    const prayerProgress = document.getElementById('prayer-progress');
-    const prayerCount = document.getElementById('prayer-count');
+    // عناصر الإنجازات
+    const achievementsModal = document.getElementById('achievements-modal');
+    
+    // عناصر الروحانيات
+    const spiritualityModal = document.getElementById('spirituality-modal');
+    const morningAdhkarBtn = document.getElementById('morning-adhkar-btn');
+    const eveningAdhkarBtn = document.getElementById('evening-adhkar-btn');
+    const fajrPrayerBtn = document.getElementById('fajr-prayer-btn');
+    const dhuhrPrayerBtn = document.getElementById('dhuhr-prayer-btn');
+    const asrPrayerBtn = document.getElementById('asr-prayer-btn');
+    const maghribPrayerBtn = document.getElementById('maghrib-prayer-btn');
+    const ishaPrayerBtn = document.getElementById('isha-prayer-btn');
+    const salawatBtn = document.getElementById('salawat-btn');
+    const spiritualPointsEl = document.getElementById('spiritual-points');
     
     // الإشعارات
     const notification = document.getElementById('notification');
@@ -305,8 +188,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         loadPlayerData();
         renderTasks();
+        renderRewards();
         updatePlayerStats();
         updateCurrentTime();
+        updateSpiritualityUI();
         setInterval(updateCurrentTime, 1000);
         requestNotificationPermission();
         
@@ -317,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // أحداث المؤقت
-        timerTool.addEventListener('click', () => {
+        document.getElementById('timer-tool').addEventListener('click', () => {
             timerModal.style.display = 'flex';
             updateTimerDisplay();
         });
@@ -338,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // أحداث السبحة
-        tasbeehTool.addEventListener('click', () => {
+        document.getElementById('tasbeeh-tool').addEventListener('click', () => {
             tasbeehModal.style.display = 'flex';
         });
         
@@ -347,6 +232,9 @@ document.addEventListener('DOMContentLoaded', function() {
             tasbeehCount.textContent = dhikrCount;
             tasbeehCount.classList.add('pulse');
             setTimeout(() => tasbeehCount.classList.remove('pulse'), 500);
+            
+            player.totalTasbeeh = (player.totalTasbeeh || 0) + 1;
+            checkAchievements();
             
             // كسب 5 عملات لكل 10 تسبيحات
             if (dhikrCount % 10 === 0) {
@@ -370,19 +258,41 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // أحداث الأذكار
-        azkarTool.addEventListener('click', () => {
-            azkarModal.style.display = 'flex';
-            renderAzkar();
+        // أحداث المكافآت
+        document.getElementById('rewards-tool').addEventListener('click', () => {
+            rewardsModal.style.display = 'flex';
         });
         
-        // أحداث الصلاة
-        prayerTool.addEventListener('click', () => {
-            prayerModal.style.display = 'flex';
-            updatePrayerStats();
+        // أحداث الإنجازات
+        document.getElementById('achievements-tool').addEventListener('click', () => {
+            achievementsModal.style.display = 'flex';
+            renderAchievements();
         });
         
-        // أحداث إغلاق النوافذ المنبثقة
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderAchievements(btn.dataset.tab);
+            });
+        });
+        
+        // أحداث الروحانيات
+        document.getElementById('spirituality-tool').addEventListener('click', () => {
+            spiritualityModal.style.display = 'flex';
+            updateSpiritualityUI();
+        });
+        
+        morningAdhkarBtn.addEventListener('click', () => toggleSpiritualityItem('morningAdhkar'));
+        eveningAdhkarBtn.addEventListener('click', () => toggleSpiritualityItem('eveningAdhkar'));
+        fajrPrayerBtn.addEventListener('click', () => toggleSpiritualityItem('fajrPrayer'));
+        dhuhrPrayerBtn.addEventListener('click', () => toggleSpiritualityItem('dhuhrPrayer'));
+        asrPrayerBtn.addEventListener('click', () => toggleSpiritualityItem('asrPrayer'));
+        maghribPrayerBtn.addEventListener('click', () => toggleSpiritualityItem('maghribPrayer'));
+        ishaPrayerBtn.addEventListener('click', () => toggleSpiritualityItem('ishaPrayer'));
+        salawatBtn.addEventListener('click', () => toggleSpiritualityItem('salawat'));
+        
+        // إغلاق النوافذ المنبثقة
         document.querySelectorAll('.close-modal').forEach(closeBtn => {
             closeBtn.addEventListener('click', () => {
                 document.querySelectorAll('.modal').forEach(modal => {
@@ -397,15 +307,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // تهيئة متتبع الصلوات
-        setupPrayerTracker();
+        // التحقق من تاريخ آخر تحديث للروحانيات
+        checkSpiritualityReset();
     }
     
     // تحميل بيانات اللاعب
     function loadPlayerData() {
         const savedPlayer = localStorage.getItem('eliteTaskPlayer');
         if (savedPlayer) {
-            Object.assign(player, JSON.parse(savedPlayer));
+            const parsedData = JSON.parse(savedPlayer);
+            
+            // دمج البيانات مع الحفاظ على القيم الافتراضية للخصائص الجديدة
+            Object.keys(parsedData).forEach(key => {
+                if (key === 'spirituality') {
+                    Object.keys(parsedData[key]).forEach(subKey => {
+                        player[key][subKey] = parsedData[key][subKey];
+                    });
+                } else {
+                    player[key] = parsedData[key];
+                }
+            });
         } else {
             player.tasks = [...defaultTasks];
             savePlayerData();
@@ -445,137 +366,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // عرض الأذكار
-    function renderAzkar() {
-        morningAzkarList.innerHTML = '';
-        eveningAzkarList.innerHTML = '';
-        
-        morningAzkar.forEach(zkr => {
-            const zkrItem = document.createElement('div');
-            zkrItem.className = 'azkar-item';
-            zkrItem.innerHTML = `
-                <h3>${zkr.title} (${zkr.count} مرة)</h3>
-                <p>${zkr.content.replace(/\n/g, '<br>')}</p>
-                ${zkr.reference ? `<div class="reference">${zkr.reference}</div>` : ''}
+    // عرض المكافآت
+    function renderRewards() {
+        rewardsGrid.innerHTML = '';
+        rewards.forEach(reward => {
+            const rewardItem = document.createElement('div');
+            rewardItem.className = 'reward-item';
+            rewardItem.innerHTML = `
+                <i class="fas ${reward.icon}"></i>
+                <h3>${reward.name}</h3>
+                <p>${reward.description}</p>
+                <div class="reward-cost">${reward.cost} <i class="fas fa-coins"></i></div>
             `;
-            morningAzkarList.appendChild(zkrItem);
+            rewardItem.addEventListener('click', () => purchaseReward(reward));
+            rewardsGrid.appendChild(rewardItem);
         });
-        
-        eveningAzkar.forEach(zkr => {
-            const zkrItem = document.createElement('div');
-            zkrItem.className = 'azkar-item';
-            zkrItem.innerHTML = `
-                <h3>${zkr.title} (${zkr.count} مرة)</h3>
-                <p>${zkr.content.replace(/\n/g, '<br>')}</p>
-                ${zkr.reference ? `<div class="reference">${zkr.reference}</div>` : ''}
-            `;
-            eveningAzkarList.appendChild(zkrItem);
-        });
-        
-        // تحميل حالة الأذكار
-        const today = new Date().toDateString();
-        morningCheck.checked = localStorage.getItem(`morningAzkar_${today}`) === 'true';
-        eveningCheck.checked = localStorage.getItem(`eveningAzkar_${today}`) === 'true';
-        
-        // أحداث التغيير
-        morningCheck.addEventListener('change', () => {
-            localStorage.setItem(`morningAzkar_${today}`, morningCheck.checked);
-            if (morningCheck.checked) {
-                player.xp += 50;
-                player.coins += 25;
-                updatePlayerStats();
-                showNotification('أحسنت! كسبت 50 XP و 25 عملة لإكمال أذكار الصباح');
-            }
-        });
-        
-        eveningCheck.addEventListener('change', () => {
-            localStorage.setItem(`eveningAzkar_${today}`, eveningCheck.checked);
-            if (eveningCheck.checked) {
-                player.xp += 50;
-                player.coins += 25;
-                updatePlayerStats();
-                showNotification('أحسنت! كسبت 50 XP و 25 عملة لإكمال أذكار المساء');
-            }
-        });
-    }
-    
-    // تهيئة متتبع الصلوات
-    function setupPrayerTracker() {
-        const today = new Date().toDateString();
-        
-        // تحميل حالة الصلوات
-        fajrCheck.checked = localStorage.getItem(`fajr_${today}`) === 'true';
-        dhuhrCheck.checked = localStorage.getItem(`dhuhr_${today}`) === 'true';
-        asrCheck.checked = localStorage.getItem(`asr_${today}`) === 'true';
-        maghribCheck.checked = localStorage.getItem(`maghrib_${today}`) === 'true';
-        ishaCheck.checked = localStorage.getItem(`isha_${today}`) === 'true';
-        salahCheck.checked = localStorage.getItem(`salah_${today}`) === 'true';
-        
-        // أحداث التغيير
-        fajrCheck.addEventListener('change', updatePrayerStatus);
-        dhuhrCheck.addEventListener('change', updatePrayerStatus);
-        asrCheck.addEventListener('change', updatePrayerStatus);
-        maghribCheck.addEventListener('change', updatePrayerStatus);
-        ishaCheck.addEventListener('change', updatePrayerStatus);
-        salahCheck.addEventListener('change', updatePrayerStatus);
-        
-        function updatePrayerStatus(e) {
-            const prayer = e.target.id.replace('-check', '');
-            localStorage.setItem(`${prayer}_${today}`, e.target.checked);
-            
-            if (e.target.checked) {
-                // مكافأة الصلاة
-                if (prayer !== 'salah') {
-                    player.xp += 100;
-                    player.coins += 50;
-                    showNotification(`أحسنت! كسبت 100 XP و 50 عملة لإكمال صلاة ${getPrayerName(prayer)}`);
-                } else {
-                    player.xp += 30;
-                    player.coins += 15;
-                    showNotification('أحسنت! كسبت 30 XP و 15 عملة للصلاة على النبي');
-                }
-                updatePlayerStats();
-            }
-            
-            updatePrayerStats();
-        }
-        
-        function getPrayerName(prayer) {
-            const names = {
-                fajr: 'الفجر',
-                dhuhr: 'الظهر',
-                asr: 'العصر',
-                maghrib: 'المغرب',
-                isha: 'العشاء'
-            };
-            return names[prayer] || '';
-        }
-    }
-    
-    // تحديث إحصائيات الصلاة
-    function updatePrayerStats() {
-        const today = new Date().toDateString();
-        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-        let completed = 0;
-        
-        prayers.forEach(prayer => {
-            if (localStorage.getItem(`${prayer}_${today}`) === 'true') {
-                completed++;
-            }
-        });
-        
-        const progress = (completed / 5) * 100;
-        prayerProgress.style.width = `${progress}%`;
-        prayerCount.textContent = `${completed}/5`;
-        
-        // مكافأة إكمال جميع الصلوات
-        if (completed === 5 && localStorage.getItem(`prayerReward_${today}`) !== 'given') {
-            player.xp += 200;
-            player.coins += 100;
-            localStorage.setItem(`prayerReward_${today}`, 'given');
-            showNotification('تهانينا! كسبت 200 XP و 100 عملة لإكمال جميع الصلوات اليوم');
-            updatePlayerStats();
-        }
     }
     
     // تحديث إحصائيات اللاعب
@@ -586,17 +391,6 @@ document.addEventListener('DOMContentLoaded', function() {
         playerCoins.textContent = player.coins;
         completedTasks.textContent = player.completedTasks;
         xpProgress.style.width = `${(player.xp / player.maxXp) * 100}%`;
-        
-        // التحقق من مستوى جديد
-        if (player.xp >= player.maxXp) {
-            player.level++;
-            player.xp -= player.maxXp;
-            player.maxXp = Math.floor(player.maxXp * 1.5);
-            player.coins += player.level * 100;
-            
-            showNotification(`تهانينا! لقد وصلت للمستوى ${player.level}!`, true);
-        }
-        
         savePlayerData();
     }
     
@@ -630,13 +424,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 player.xp += task.xp;
                 player.coins += 50;
                 player.completedTasks++;
+                
                 showNotification(`أحسنت! كسبت ${task.xp} XP و 50 عملة`);
+                checkLevelUp();
             } else {
                 player.xp -= task.xp;
                 player.coins -= 50;
                 player.completedTasks--;
             }
             
+            checkAchievements();
             savePlayerData();
             renderTasks();
             updatePlayerStats();
@@ -663,27 +460,345 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // التحقق من مستوى جديد
+    function checkLevelUp() {
+        if (player.xp >= player.maxXp) {
+            player.level++;
+            player.xp -= player.maxXp;
+            player.maxXp = Math.floor(player.maxXp * 1.5);
+            player.coins += player.level * 100;
+            
+            showNotification(`تهانينا! لقد وصلت للمستوى ${player.level}!`, true);
+            savePlayerData();
+            updatePlayerStats();
+            
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(`المستوى ${player.level}!`, {
+                    body: `تهانينا! لقد تقدمت إلى المستوى ${player.level}`,
+                    icon: 'https://via.placeholder.com/128/121212/FFD700?text=LV+' + player.level
+                });
+            }
+        }
+    }
+    
+    // شراء مكافأة
+    function purchaseReward(reward) {
+        if (player.coins >= reward.cost) {
+            player.coins -= reward.cost;
+            player.inventory.push(reward);
+            player.rewardsClaimed = (player.rewardsClaimed || 0) + 1;
+            checkAchievements();
+            savePlayerData();
+            updatePlayerStats();
+            showNotification(`لقد اشتريت ${reward.name}! استمتع بمكافأتك.`);
+            
+            setTimeout(() => {
+                rewardsModal.style.display = 'none';
+            }, 1500);
+        } else {
+            showErrorMessage("ليس لديك ما يكفي من العملات لشراء هذه المكافأة.");
+        }
+    }
+    
+    // عرض الإنجازات
+    function renderAchievements(tab = 'unlocked') {
+        const container = document.getElementById('achievements-list');
+        container.innerHTML = '';
+        
+        achievements.forEach(achievement => {
+            const isUnlocked = player.unlockedAchievements.includes(achievement.id);
+            
+            if ((tab === 'unlocked' && isUnlocked) || (tab === 'locked' && !isUnlocked)) {
+                const achievementEl = document.createElement('div');
+                achievementEl.className = `achievement-item ${isUnlocked ? '' : 'locked'}`;
+                
+                achievementEl.innerHTML = `
+                    <i class="fas ${achievement.icon} achievement-icon"></i>
+                    <div class="achievement-details">
+                        <div class="achievement-title">${achievement.title}</div>
+                        <div class="achievement-desc">${achievement.description}</div>
+                        ${!isUnlocked ? `
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: ${achievement.progress(player) * 100}%"></div>
+                        </div>
+                        ` : ''}
+                        ${achievement.reward ? `
+                        <div class="achievement-reward">
+                            <span>المكافأة: </span>
+                            ${achievement.reward.coins ? `<span>${achievement.reward.coins} <i class="fas fa-coins"></i></span>` : ''}
+                            ${achievement.reward.xp ? `<span>${achievement.reward.xp} <i class="fas fa-star"></i></span>` : ''}
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(achievementEl);
+            }
+        });
+    }
+    
+    // التحقق من الإنجازات
+    function checkAchievements() {
+        achievements.forEach(achievement => {
+            if (!player.unlockedAchievements.includes(achievement.id)) {
+                if (achievement.condition(player)) {
+                    unlockAchievement(achievement);
+                }
+            }
+        });
+    }
+    
+    // فتح إنجاز جديد
+    function unlockAchievement(achievement) {
+        player.unlockedAchievements.push(achievement.id);
+        
+        if (achievement.reward) {
+            if (achievement.reward.coins) {
+                player.coins += achievement.reward.coins;
+            }
+            if (achievement.reward.xp) {
+                player.xp += achievement.reward.xp;
+                checkLevelUp();
+            }
+        }
+        
+        savePlayerData();
+        updatePlayerStats();
+        
+        showNotification(`تهانينا! لقد حققت إنجاز ${achievement.title} وكسبت ${achievement.reward.coins || 0} عملة`, true);
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(`إنجاز جديد: ${achievement.title}`, {
+                body: achievement.description,
+                icon: 'https://via.placeholder.com/128/121212/FFD700?text=✓'
+            });
+        }
+    }
+    
+    // تحديث واجهة الروحانيات
+    function updateSpiritualityUI() {
+        // تحديث حالة الأذكار
+        document.getElementById('morning-adhkar-status').innerHTML = 
+            player.spirituality.morningAdhkar ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        document.getElementById('evening-adhkar-status').innerHTML = 
+            player.spirituality.eveningAdhkar ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        
+        // تحديث حالة الصلوات
+        document.getElementById('fajr-prayer-status').innerHTML = 
+            player.spirituality.fajrPrayer ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        document.getElementById('dhuhr-prayer-status').innerHTML = 
+            player.spirituality.dhuhrPrayer ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        document.getElementById('asr-prayer-status').innerHTML = 
+            player.spirituality.asrPrayer ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        document.getElementById('maghrib-prayer-status').innerHTML = 
+            player.spirituality.maghribPrayer ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        document.getElementById('isha-prayer-status').innerHTML = 
+            player.spirituality.ishaPrayer ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        
+        // تحديث حالة الصلاة على النبي
+        document.getElementById('salawat-status').innerHTML = 
+            player.spirituality.salawat ? '<i class="fas fa-check success-icon"></i>' : '<i class="fas fa-times red-icon"></i>';
+        
+        // تحديث النقاط الروحانية
+        spiritualPointsEl.textContent = player.spirituality.spiritualPoints || 0;
+        
+        // تحديث أزرار الروحانيات
+        updateSpiritualityButtons();
+    }
+    
+    // تحديث أزرار الروحانيات
+    function updateSpiritualityButtons() {
+        const buttons = [
+            { id: 'morning-adhkar-btn', condition: player.spirituality.morningAdhkar },
+            { id: 'evening-adhkar-btn', condition: player.spirituality.eveningAdhkar },
+            { id: 'fajr-prayer-btn', condition: player.spirituality.fajrPrayer },
+            { id: 'dhuhr-prayer-btn', condition: player.spirituality.dhuhrPrayer },
+            { id: 'asr-prayer-btn', condition: player.spirituality.asrPrayer },
+            { id: 'maghrib-prayer-btn', condition: player.spirituality.maghribPrayer },
+            { id: 'isha-prayer-btn', condition: player.spirituality.ishaPrayer },
+            { id: 'salawat-btn', condition: player.spirituality.salawat }
+        ];
+        
+        buttons.forEach(btn => {
+            const buttonEl = document.getElementById(btn.id);
+            if (btn.condition) {
+                buttonEl.classList.remove('gold-button');
+                buttonEl.classList.add('success-button');
+                buttonEl.innerHTML = '<i class="fas fa-check"></i> تمت';
+            } else {
+                buttonEl.classList.remove('success-button');
+                buttonEl.classList.add('gold-button');
+                buttonEl.innerHTML = 'تمت';
+            }
+        });
+    }
+    
+    // تبديل حالة العنصر الروحاني
+    function toggleSpiritualityItem(item) {
+        player.spirituality[item] = !player.spirituality[item];
+        
+        // حساب النقاط الروحانية
+        if (player.spirituality[item]) {
+            let points = 0;
+            
+            switch(item) {
+                case 'morningAdhkar':
+                case 'eveningAdhkar':
+                    points = 20;
+                    break;
+                case 'fajrPrayer':
+                case 'dhuhrPrayer':
+                case 'asrPrayer':
+                case 'maghribPrayer':
+                case 'ishaPrayer':
+                    points = 30;
+                    break;
+                case 'salawat':
+                    points = 10;
+                    break;
+            }
+            
+            player.spirituality.spiritualPoints += points;
+            player.xp += points;
+            
+            // التحقق من إكمال الأذكار اليومية
+            checkDailyAdhkar();
+            
+            // التحقق من إكمال الصلوات اليومية
+            checkDailyPrayersCompleted();
+            
+            checkLevelUp();
+        } else {
+            let points = 0;
+            
+            switch(item) {
+                case 'morningAdhkar':
+                case 'eveningAdhkar':
+                    points = 20;
+                    break;
+                case 'fajrPrayer':
+                case 'dhuhrPrayer':
+                case 'asrPrayer':
+                case 'maghribPrayer':
+                case 'ishaPrayer':
+                    points = 30;
+                    break;
+                case 'salawat':
+                    points = 10;
+                    break;
+            }
+            
+            player.spirituality.spiritualPoints -= points;
+            player.xp -= points;
+        }
+        
+        // تحديث تاريخ آخر تعديل
+        player.spirituality.lastUpdated = new Date().toISOString().split('T')[0];
+        
+        savePlayerData();
+        updatePlayerStats();
+        updateSpiritualityUI();
+        checkAchievements();
+        
+        showNotification(player.spirituality[item] ? 
+            `تم تسجيل ${getSpiritualityItemName(item)} بنجاح!` : 
+            `تم إلغاء تسجيل ${getSpiritualityItemName(item)}`);
+    }
+    
+    // الحصول على اسم العنصر الروحاني
+    function getSpiritualityItemName(item) {
+        const names = {
+            morningAdhkar: "أذكار الصباح",
+            eveningAdhkar: "أذكار المساء",
+            fajrPrayer: "صلاة الفجر",
+            dhuhrPrayer: "صلاة الظهر",
+            asrPrayer: "صلاة العصر",
+            maghribPrayer: "صلاة المغرب",
+            ishaPrayer: "صلاة العشاء",
+            salawat: "الصلاة على النبي"
+        };
+        return names[item] || item;
+    }
+    
+    // التحقق من إكمال الأذكار اليومية
+    function checkDailyAdhkar() {
+        if (player.spirituality.morningAdhkar && player.spirituality.eveningAdhkar) {
+            player.spirituality.adhkarStreak = (player.spirituality.adhkarStreak || 0) + 1;
+            showNotification("أحسنت! لقد أكملت أذكار الصباح والمساء اليوم", true);
+        }
+    }
+    
+    // التحقق من إكمال جميع الصلوات اليومية
+    function checkDailyPrayersCompleted() {
+        const prayers = ['fajrPrayer', 'dhuhrPrayer', 'asrPrayer', 'maghribPrayer', 'ishaPrayer'];
+        const allPrayersCompleted = prayers.every(prayer => player.spirituality[prayer]);
+        
+        if (allPrayersCompleted) {
+            player.spirituality.dailyPrayersCompleted = 1;
+            showNotification("تهانينا! لقد أكملت جميع الصلوات اليومية!", true);
+        }
+    }
+    
+    // التحقق من تاريخ آخر تحديث للروحانيات وإعادة تعيينها إذا كان اليوم جديدًا
+    function checkSpiritualityReset() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (player.spirituality.lastUpdated !== today) {
+            // إذا كان اليوم مختلفًا عن آخر تحديث، نتحقق من استمرارية الأذكار
+            if (player.spirituality.lastUpdated && 
+                !(player.spirituality.morningAdhkar && player.spirituality.eveningAdhkar)) {
+                player.spirituality.adhkarStreak = 0;
+            }
+            
+            // إعادة تعيين جميع العناصر الروحانية اليومية
+            player.spirituality.morningAdhkar = false;
+            player.spirituality.eveningAdhkar = false;
+            player.spirituality.fajrPrayer = false;
+            player.spirituality.dhuhrPrayer = false;
+            player.spirituality.asrPrayer = false;
+            player.spirituality.maghribPrayer = false;
+            player.spirituality.ishaPrayer = false;
+            player.spirituality.salawat = false;
+            player.spirituality.dailyPrayersCompleted = 0;
+            player.spirituality.lastUpdated = today;
+            
+            savePlayerData();
+            updateSpiritualityUI();
+        }
+    }
+    
     // عرض الإشعارات
     function showNotification(message, isLevelUp = false) {
         notification.textContent = message;
-        notification.className = 'notification';
         notification.classList.add('show');
         
         if (isLevelUp) {
-            notification.classList.add('error');
+            notification.style.backgroundColor = 'var(--red)';
+        } else {
+            notification.style.backgroundColor = 'var(--gold)';
         }
         
         setTimeout(() => {
             notification.classList.remove('show');
         }, 3000);
         
-        // إرسال إشعار نظام إذا كان مدعوماً
         if ('Notification' in window && Notification.permission === 'granted' && player.settings.notifications) {
             new Notification('إنجاز - إشعار', {
                 body: message,
                 icon: 'https://via.placeholder.com/128/121212/FFD700?text=إنجاز'
             });
         }
+    }
+    
+    // عرض رسالة خطأ
+    function showErrorMessage(message) {
+        notification.textContent = message;
+        notification.classList.add('show');
+        notification.style.backgroundColor = 'var(--red)';
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
     }
     
     // طلب إذن الإشعارات
@@ -702,28 +817,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const now = new Date();
         const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
         document.getElementById('current-time').textContent = timeString;
-        
-        // التحقق من وقت الأذكار
-        checkAzkarTime(now);
-    }
-    
-    // التحقق من وقت الأذكار
-    function checkAzkarTime(now) {
-        const hours = now.getHours();
-        const today = new Date().toDateString();
-        
-        // وقت الصباح (من 4 صباحًا إلى 12 ظهرًا)
-        if (hours >= 4 && hours < 12) {
-            if (!localStorage.getItem(`morningAzkar_${today}`)) {
-                showNotification('هل قرأت أذكار الصباح اليوم؟ اضغط على أيقونة الأذكار');
-            }
-        }
-        // وقت المساء (من 3 عصرًا إلى 12 منتصف الليل)
-        else if (hours >= 15 && hours < 24) {
-            if (!localStorage.getItem(`eveningAzkar_${today}`)) {
-                showNotification('هل قرأت أذكار المساء اليوم؟ اضغط على أيقونة الأذكار');
-            }
-        }
     }
     
     // وظائف المؤقت
@@ -787,10 +880,18 @@ document.addEventListener('DOMContentLoaded', function() {
         startTimerBtn.classList.remove('red-button');
         startTimerBtn.classList.add('gold-button');
         
-        // مكافأة المؤقت
         player.coins += 20;
+        player.timerSessions = (player.timerSessions || 0) + 1;
+        checkAchievements();
         updatePlayerStats();
         showNotification("انتهى الوقت! لقد كسبت 20 عملة لإكمال الجلسة.");
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('انتهت الجلسة!', {
+                body: 'لقد أكملت جلسة المؤقت بنجاح وكسبت 20 عملة',
+                icon: 'https://via.placeholder.com/128/121212/FFD700?text=✓'
+            });
+        }
     }
     
     // بدء التطبيق

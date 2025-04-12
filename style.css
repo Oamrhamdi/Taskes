@@ -121,6 +121,10 @@ body {
     color: var(--red);
 }
 
+.success-icon {
+    color: var(--success);
+}
+
 /* شريط التقدم */
 .progress-container {
     height: 10px;
@@ -209,6 +213,15 @@ body {
 
 .red-button:hover {
     background-color: var(--light-red);
+}
+
+.success-button {
+    background-color: var(--success);
+    color: white;
+}
+
+.success-button:hover {
+    background-color: #43a047;
 }
 
 .tasks-list {
@@ -485,159 +498,207 @@ body {
     font-weight: bold;
 }
 
-/* نافذة الأذكار */
-.azkar-tabs {
-    display: flex;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--dark-gray);
+/* نافذة المكافآت */
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
 }
 
-.azkar-tab {
-    padding: 10px 20px;
-    background-color: transparent;
-    border: none;
-    color: var(--light-gray);
+.reward-item {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    padding: 20px 15px;
+    border-radius: 10px;
+    text-align: center;
     cursor: pointer;
-    font-weight: bold;
-    position: relative;
+    transition: all 0.3s;
+    border: 1px solid var(--dark-gray);
 }
 
-.azkar-tab.active {
+.reward-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.1);
+    border-color: var(--gold);
+}
+
+.reward-item i {
+    font-size: 2rem;
+    margin-bottom: 10px;
     color: var(--gold);
 }
 
-.azkar-tab.active::after {
+.reward-item h3 {
+    margin-bottom: 5px;
+    color: var(--gold);
+}
+
+.reward-item p {
+    font-size: 0.8rem;
+    color: var(--light-gray);
+    margin-bottom: 10px;
+}
+
+.reward-cost {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* أنماط نظام الإنجازات */
+.tabs {
+    display: flex;
+    margin: 15px 0;
+    border-bottom: 1px solid var(--dark-gray);
+}
+
+.tab-btn {
+    padding: 8px 15px;
+    background: none;
+    border: none;
+    color: var(--light-gray);
+    cursor: pointer;
+    font-size: 0.9rem;
+    position: relative;
+}
+
+.tab-btn.active {
+    color: var(--gold);
+    font-weight: bold;
+}
+
+.tab-btn.active::after {
     content: '';
     position: absolute;
     bottom: -1px;
     left: 0;
     width: 100%;
-    height: 3px;
+    height: 2px;
     background-color: var(--gold);
 }
 
-.azkar-tab-content {
-    display: none;
-}
-
-.azkar-tab-content.active {
-    display: block;
-}
-
-.azkar-checkbox {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: var(--dark-gray);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-}
-
-.azkar-checkbox input {
-    margin-left: 10px;
-    width: 20px;
-    height: 20px;
-    accent-color: var(--gold);
-}
-
-.azkar-checkbox label {
-    flex: 1;
-    font-weight: bold;
-}
-
-.azkar-list {
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-
-.azkar-item {
-    background-color: var(--dark-gray);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
-
-.azkar-item h3 {
-    color: var(--gold);
-    margin-bottom: 10px;
-}
-
-.azkar-item p {
-    line-height: 1.6;
-    margin-bottom: 10px;
-}
-
-.azkar-item .reference {
-    font-size: 0.8rem;
-    color: var(--light-gray);
-    font-style: italic;
-}
-
-/* نافذة الصلاة */
-.prayer-grid {
+.achievements-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 15px;
-    margin-bottom: 20px;
+    margin-top: 15px;
 }
 
-.prayer-item {
-    background-color: var(--dark-gray);
+.achievement-item {
+    display: flex;
+    align-items: center;
     padding: 15px;
+    background-color: var(--dark-gray);
     border-radius: 10px;
-    text-align: center;
+    border-left: 3px solid var(--gold);
 }
 
-.prayer-item h3 {
+.achievement-item.locked {
+    opacity: 0.6;
+    border-left-color: var(--dark-gray);
+}
+
+.achievement-icon {
+    font-size: 1.8rem;
+    margin-left: 15px;
     color: var(--gold);
-    margin-bottom: 10px;
 }
 
-.prayer-checkbox {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+.achievement-item.locked .achievement-icon {
+    color: var(--light-gray);
 }
 
-.prayer-checkbox input {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--gold);
-}
-
-.prayer-stats {
-    background-color: var(--dark-gray);
-    padding: 15px;
-    border-radius: 10px;
-}
-
-.prayer-progress {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.prayer-progress .progress-bar {
+.achievement-details {
     flex: 1;
-    height: 10px;
-    background-color: #333;
-    border-radius: 5px;
+}
+
+.achievement-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.achievement-desc {
+    font-size: 0.85rem;
+    color: var(--light-gray);
+    margin-bottom: 5px;
+}
+
+.achievement-progress {
+    height: 5px;
+    background-color: var(--darker-bg);
+    border-radius: 3px;
+    margin-top: 8px;
     overflow: hidden;
 }
 
-.prayer-progress .progress-bar div {
+.achievement-progress-bar {
     height: 100%;
+    background-color: var(--gold);
     width: 0%;
-    background: linear-gradient(90deg, var(--gold) 0%, var(--red) 100%);
     transition: width 0.5s ease;
 }
 
-.prayer-progress span {
-    font-weight: bold;
+.achievement-reward {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
     color: var(--gold);
+}
+
+.achievement-reward i {
+    margin-left: 5px;
+}
+
+/* نافذة الروحانيات */
+.spirituality-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.spirituality-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background-color: var(--dark-gray);
+    border-radius: 10px;
+    border-left: 3px solid var(--gold);
+}
+
+.spirituality-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.spirituality-info i {
+    font-size: 1.2rem;
+    color: var(--gold);
+}
+
+.spirituality-status {
+    margin: 0 15px;
+}
+
+.spirituality-btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+}
+
+.spirituality-stats {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--dark-gray);
+    border-radius: 10px;
+    border-left: 3px solid var(--gold);
 }
 
 /* الإشعارات */
@@ -661,11 +722,6 @@ body {
     transform: translateX(0);
 }
 
-.notification.error {
-    background-color: var(--red);
-    color: white;
-}
-
 /* تأثيرات إضافية */
 @keyframes pulse {
     0% { transform: scale(1); }
@@ -680,10 +736,10 @@ body {
 /* تصميم متجاوب */
 @media (max-width: 480px) {
     .tools-section {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
     
-    .timer-presets, .prayer-grid {
+    .timer-presets, .rewards-grid {
         grid-template-columns: 1fr;
     }
     
